@@ -33,7 +33,11 @@ beautifulsoup4
 flask
 gym>=0.21
 spacy
-pyserini
+# pyserini 0.24+ ships Lucene 10 which dropped Lucene 8 index support.
+# WebShop's indexes.zip is built with Lucene 8.x, so we need pyserini that
+# bundles Lucene 9.x (which still reads 8.x indexes). 0.22.1 is the last
+# such version that still has good Python 3.12 wheels.
+pyserini==0.22.1
 
 # Utilities
 aiohttp
