@@ -18,10 +18,13 @@ fi
 
 # 2. WebShop env
 echo "==> Patching WebShop pins for Python 3.12 compatibility..."
-# faiss-cpu 1.7.4 has no wheel for Python 3.12 (only 1.8+ does).
+# Upstream WebShop's setup.py / requirements.txt are full of 2022-era exact
+# pins (faiss-cpu==1.7.4, spacy==3.4.x → thinc with no py312 wheel, etc.)
+# Relax every `pkg==X.Y.Z` to `pkg>=X.Y.Z` so pip picks a compatible wheel.
 for f in "${UPSTREAM_DIR}/envs/webshop/setup.py" \
          "${UPSTREAM_DIR}/envs/webshop/requirements.txt"; do
-    [[ -f "$f" ]] && sed -i 's/faiss-cpu==1\.7\.4/faiss-cpu>=1.8.0/g' "$f"
+    [[ -f "$f" ]] && sed -i -E \
+        's/([a-zA-Z][a-zA-Z0-9_.-]*)==([0-9][0-9a-z.+-]*)/\1>=\2/g' "$f"
 done
 
 echo "==> Installing WebShop env (editable)..."
