@@ -60,12 +60,30 @@ git pull --ff-only
 # -----------------------------------------------------------------------------
 # 4. Java for WebShop's pyserini index (needs JVM 11+).
 # -----------------------------------------------------------------------------
-step 4 "Install OpenJDK (JDK, not just JRE — pyserini's jnius needs javac)"
-if ! command -v javac >/dev/null 2>&1; then
-    apt-get update -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openjdk-17-jdk-headless
+step 4 "Install OpenJDK 21 (pyserini's anserini jar needs Java 21+)"
+# class file version 65.0 in pyserini's jars ⇒ JDK 21 minimum.
+NEED_JDK21=1
+if command -v java >/dev/null 2>&1 && java -version 2>&1 | grep -qE 'version "(2[1-9]|[3-9])'; then
+    NEED_JDK21=0
 fi
-javac -version 2>&1 | head -1
+if [[ "${NEED_JDK21}" == "1" ]]; then
+    apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openjdk-21-jdk-headless
+fi
+
+JAVA_HOME=$(ls -d /usr/lib/jvm/java-21-openjdk-* 2>/dev/null | head -1)
+if [[ -z "${JAVA_HOME}" ]]; then
+    echo "ERROR: openjdk-21 install succeeded but JAVA_HOME not found in /usr/lib/jvm/"
+    exit 1
+fi
+export JAVA_HOME
+export PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Persist in ~/.bashrc so future sessions also pick up Java 21.
+if ! grep -q "JAVA_HOME=/usr/lib/jvm/java-21" ~/.bashrc 2>/dev/null; then
+    printf '\n# JDK 21 for pyserini (managed by autodl_one_shot_setup.sh)\nexport JAVA_HOME=%s\nexport PATH=$JAVA_HOME/bin:$PATH\n' "${JAVA_HOME}" >> ~/.bashrc
+fi
+
 java -version 2>&1 | head -1
 
 # -----------------------------------------------------------------------------
