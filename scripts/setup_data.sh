@@ -72,10 +72,12 @@ if [[ ! -d "data" ]]; then
     unzip -q data.zip
 fi
 
-if [[ ! -d "search_index" ]]; then
+if [[ ! -d "search_index" ]] || [[ -z "$(ls -A search_index 2>/dev/null)" ]]; then
     echo "==> Extracting indexes.zip..."
     mkdir -p search_index
-    unzip -q indexes.zip -d search_index/
+    # -j: junk paths so Lucene files land directly in search_index/, not in
+    # search_index/indexes/ (some indexes.zip variants wrap files in a subdir).
+    unzip -q -j indexes.zip -d search_index/
 fi
 
 # 4. Expert SFT trajectories (training-only). Skip when BASELINE_ONLY=1.
