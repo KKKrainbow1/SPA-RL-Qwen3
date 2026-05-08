@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.Python
+build/
+dist/
+.eggs/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Models / weights / data (too large for git)
+ckpt/
+ckt/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.zip
+*.tar.gz
+data.zip
+indexes.zip
+search_index/
+**/loramerged/
+**/model_state.pt
+
+# WebShop env data
+envs/webshop/data/
+envs/webshop/search_index/
+
+# Trajectory data (large JSON)
+exploration_outputs/
+trajectories/*.json
+prm/sampled_data_*.json
+prm/exploration_inference_results_*.json
+
+# Logs / wandb
+logs/
+wandb/
+runs/
+*.log
+*.out
+nohup.out
+
+# Eval outputs
+eval_outputs/
+eval/*/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+.cursor/
+
+# Secrets (paranoia)
+.env
+.env.*
+*.key
+*.pem
+config.local.json
+
+# Notebooks scratch
+notebooks/scratch/
+*-checkpoint.ipynb
+
+# Temp
+tmp/
+temp/
+*.tmp

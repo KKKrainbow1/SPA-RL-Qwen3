@@ -1,0 +1,40 @@
+# Core RL training
+trl>=0.7,<1.0          # PPOTrainer (legacy API used by StepPPOTrainer)
+transformers>=4.45
+accelerate>=0.30
+peft>=0.10
+deepspeed>=0.14
+datasets>=2.18
+
+# Inference / serving
+vllm>=0.6.0            # required for AsyncLLMEngine + tool_call_parser
+openai>=1.30           # OpenAI-compatible client for vLLM API server
+
+# Models
+torch>=2.1
+einops
+flash-attn>=2.5; platform_system != "Darwin"
+bitsandbytes; platform_system != "Darwin"
+
+# WebShop env (also needs `pip install -e envs/webshop` separately)
+beautifulsoup4
+flask
+gym>=0.21
+spacy
+pyserini
+
+# Async / utilities
+aiohttp
+tqdm
+numpy
+pandas
+scikit-learn
+
+# Monitoring / logging
+wandb
+tensorboard
+
+# Dev
+pytest
+ruff
+ipykernel
