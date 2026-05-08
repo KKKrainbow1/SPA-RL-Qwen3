@@ -15,6 +15,20 @@ K_SHOT="${K_SHOT:-1}"
 
 mkdir -p "${OUTPUT_DIR}/logs"
 
+VLLM_PID=""
+cleanup() {
+    if [[ -n "${VLLM_PID}" ]] && kill -0 "${VLLM_PID}" 2>/dev/null; then
+        echo "==> Tearing down vLLM (PID ${VLLM_PID})"
+        kill "${VLLM_PID}" 2>/dev/null || true
+        for _ in {1..10}; do
+            kill -0 "${VLLM_PID}" 2>/dev/null || break
+            sleep 1
+        done
+        kill -9 "${VLLM_PID}" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT INT TERM
+
 echo "==> Starting vLLM OpenAI-compatible server (model=${MODEL_PATH})"
 python -m vllm.entrypoints.openai.api_server \
     --model "${MODEL_PATH}" \
@@ -37,10 +51,14 @@ for i in {1..60}; do
         echo "    vLLM ready after ~$((i*5))s"
         break
     fi
+    if ! kill -0 "${VLLM_PID}" 2>/dev/null; then
+        echo "ERROR: vLLM exited during startup. Tail of log:"
+        tail -40 "${OUTPUT_DIR}/logs/vllm.log" || true
+        exit 1
+    fi
     sleep 5
     if [[ $i -eq 60 ]]; then
         echo "ERROR: vLLM did not start within 300s"
-        kill -9 "${VLLM_PID}" 2>/dev/null || true
         exit 1
     fi
 done
@@ -52,15 +70,5 @@ python extensions/tool_call_eval/fewshot_eval.py \
     --k_shot "${K_SHOT}" \
     --output_dir "${OUTPUT_DIR}"
 
-EXIT_CODE=$?
-
-echo "==> Tearing down vLLM"
-kill -9 "${VLLM_PID}" 2>/dev/null || true
-
-if [[ $EXIT_CODE -ne 0 ]]; then
-    echo "ERROR: eval script exited with code ${EXIT_CODE}"
-    exit ${EXIT_CODE}
-fi
-
 echo "==> Done. Summary:"
-cat "${OUTPUT_DIR}/summary.json" | python -m json.tool | head -20
+python -m json.tool "${OUTPUT_DIR}/summary.json" | head -20

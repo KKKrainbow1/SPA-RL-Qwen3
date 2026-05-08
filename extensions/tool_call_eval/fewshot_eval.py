@@ -26,6 +26,7 @@ from eval_agent.tasks.webshop import WebShopTask  # type: ignore
 from webshop.web_agent_site.envs import WebAgentTextEnv  # type: ignore
 
 # Ours
+from extensions.tool_call_eval.parser import parse_tool_call_output
 from extensions.tool_call_eval.webshop_env_toolcall import WebShopToolCallEnv
 from extensions.tool_call_eval.webshop_tools import WEBSHOP_TOOLS
 
@@ -34,6 +35,13 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+INSTRUCTION_PATH = REPO_ROOT / "upstream/eval_agent/prompt/instructions/webshop_inst.txt"
+ICL_PATH = REPO_ROOT / "upstream/eval_agent/prompt/icl_examples/webshop_icl.json"
+
+# WEBSHOP_TOOLS schema name -> JSON-arguments key holding the action's payload.
+_TOOL_ARG_KEY = {"search": "keyword", "click": "value"}
 
 
 SYSTEM_PROMPT = """You are an autonomous shopping agent operating on WebShop, a text-based e-commerce platform.
@@ -113,8 +121,8 @@ def run_one_task(
     env = WebShopToolCallEnv(
         task=task,
         env=base_env,
-        instruction_path="upstream/eval_agent/prompt/instructions/webshop_inst.txt",
-        icl_path="upstream/eval_agent/prompt/icl_examples/webshop_icl.json",
+        instruction_path=str(INSTRUCTION_PATH),
+        icl_path=str(ICL_PATH),
         icl_format="conversation",
         max_steps=max_steps,
     )
@@ -141,44 +149,44 @@ def run_one_task(
             break
 
         msg = resp.choices[0].message
+        tc = msg.tool_calls[0] if msg.tool_calls else None
 
-        if not msg.tool_calls:
-            logger.warning(
-                f"task {task.task_id}: no tool_call returned. content={msg.content!r}"
-            )
-            break
-
-        tc = msg.tool_calls[0]
-        try:
-            args = json.loads(tc.function.arguments)
-        except json.JSONDecodeError:
-            logger.warning(f"task {task.task_id}: bad JSON args {tc.function.arguments!r}")
-            break
-
-        if tc.function.name == "search":
-            llm_text_output = (
-                f"Thought: {msg.content or ''}\nAction: search[{args.get('keyword','')}]"
-            )
-        elif tc.function.name == "click":
-            llm_text_output = (
-                f"Thought: {msg.content or ''}\nAction: click[{args.get('value','')}]"
-            )
+        # Fallback path exists because vLLM's tool-call parser flag (--tool-call-parser
+        # hermes) is version-sensitive — when it doesn't fire, Qwen3 still emits a raw
+        # <tool_call>...</tool_call> block in content that our env-side parser can recover.
+        if tc is not None:
+            arg_key = _TOOL_ARG_KEY.get(tc.function.name)
+            if arg_key is None:
+                logger.warning(f"task {task.task_id}: unknown tool {tc.function.name}")
+                break
+            try:
+                args = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                logger.warning(f"task {task.task_id}: bad JSON args {tc.function.arguments!r}")
+                break
+            action = f"{tc.function.name}[{(args.get(arg_key) or '').strip()}]"
         else:
-            logger.warning(f"task {task.task_id}: unknown tool {tc.function.name}")
-            break
+            action = parse_tool_call_output(msg.content or "")
+            if action is None:
+                logger.warning(
+                    f"task {task.task_id}: no tool_call and no parseable fallback. "
+                    f"content={(msg.content or '')[:200]!r}"
+                )
+                break
 
-        # Send to env (parser inside the env handles either format)
+        llm_text_output = f"Thought: {msg.content or ''}\nAction: {action}"
         observation, state = env.step(llm_text_output)
 
-        # Append assistant + tool to message history for next turn
-        messages.append(
-            {
+        if tc is not None:
+            messages.append({
                 "role": "assistant",
                 "content": msg.content or "",
                 "tool_calls": [tc.model_dump()],
-            }
-        )
-        messages.append({"role": "tool", "tool_call_id": tc.id, "content": observation})
+            })
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": observation})
+        else:
+            messages.append({"role": "assistant", "content": msg.content or ""})
+            messages.append({"role": "user", "content": observation})
 
         if state.finished:
             break
