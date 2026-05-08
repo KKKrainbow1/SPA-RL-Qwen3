@@ -1,0 +1,9 @@
+# Training curve PNG exports go here.
+#
+# Recommended files:
+#   - reward_curve.png         (avg PRM step rewards over training steps)
+#   - kl_coef_vs_step.png      (adaptive KL controller behavior)
+#   - clipfrac_vs_step.png     (PPO clip rate — should stay <50%)
+#   - prm_vs_kl_dominance.png  (the ratio plot from kl_monitoring.monitor.prm_to_kl_dominance)
+#
+# Export from W&B with: `wandb.Run.export_panels()` or via the web UI.
