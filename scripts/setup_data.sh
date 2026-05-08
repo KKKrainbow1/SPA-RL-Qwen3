@@ -72,12 +72,14 @@ if [[ ! -d "data" ]]; then
     unzip -q data.zip
 fi
 
-if [[ ! -d "search_index" ]] || [[ -z "$(ls -A search_index 2>/dev/null)" ]]; then
+if [[ ! -d "search_index/indexes" ]]; then
     echo "==> Extracting indexes.zip..."
+    rm -rf search_index
     mkdir -p search_index
-    # -j: junk paths so Lucene files land directly in search_index/, not in
-    # search_index/indexes/ (some indexes.zip variants wrap files in a subdir).
-    unzip -q -j indexes.zip -d search_index/
+    # Keep the `indexes/` subdir from the zip — WebShop's engine.py loads
+    # LuceneSearcher from `${BASE_DIR}/../search_index/indexes`, so the
+    # nested structure is required.
+    unzip -q indexes.zip -d search_index/
 fi
 
 # 4. Expert SFT trajectories (training-only). Skip when BASELINE_ONLY=1.
