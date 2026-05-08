@@ -1,3 +1,7 @@
+# Setup-time symlinks (created by scripts/apply_qwen3_patches.sh)
+/eval_agent
+/upstream
+
 # Python
 __pycache__/
 *.py[cod]

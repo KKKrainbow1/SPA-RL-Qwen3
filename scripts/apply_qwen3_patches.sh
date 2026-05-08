@@ -62,6 +62,16 @@ if [[ ! -L "${EXT_LINK}" ]]; then
     echo "    + Linked extensions -> ${EXT_LINK}"
 fi
 
+# Mirror upstream's eval_agent at REPO_ROOT — upstream's WebShopTask.load_tasks
+# opens "eval_agent/data/webshop/test_indices.json" with a hardcoded relative
+# path. With cwd=REPO_ROOT, the symlink lets that resolve correctly without
+# editing upstream code.
+EVAL_AGENT_LINK="${REPO_ROOT}/eval_agent"
+if [[ ! -L "${EVAL_AGENT_LINK}" ]]; then
+    ln -s "upstream/eval_agent" "${EVAL_AGENT_LINK}"
+    echo "    + Linked eval_agent -> ${EVAL_AGENT_LINK}"
+fi
+
 # Make optional eval_agent task/env imports lazy. Upstream's __init__.py files
 # eagerly import every module (alfworld, sciworld, ...). Baseline only needs
 # WebShop, so wrap each `from .X import Y` in try/except — a missing optional
