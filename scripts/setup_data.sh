@@ -17,6 +17,13 @@ else
 fi
 
 # 2. WebShop env
+echo "==> Patching WebShop pins for Python 3.12 compatibility..."
+# faiss-cpu 1.7.4 has no wheel for Python 3.12 (only 1.8+ does).
+for f in "${UPSTREAM_DIR}/envs/webshop/setup.py" \
+         "${UPSTREAM_DIR}/envs/webshop/requirements.txt"; do
+    [[ -f "$f" ]] && sed -i 's/faiss-cpu==1\.7\.4/faiss-cpu>=1.8.0/g' "$f"
+done
+
 echo "==> Installing WebShop env (editable)..."
 pip install -e "${UPSTREAM_DIR}/envs/webshop"
 python -m spacy download en_core_web_lg
