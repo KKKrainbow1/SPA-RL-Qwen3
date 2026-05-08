@@ -36,19 +36,36 @@ if ! command -v java >/dev/null 2>&1; then
     conda install -y -c conda-forge openjdk=11
 fi
 
-# 3. WebShop data
+# 3. WebShop data + indexes. These live on Google Drive; AutoDL (CN) often
+# can't reach it. If gdown fails, manually download and place the zips at
+# the paths printed below, then re-run.
 WEBSHOP_DIR="${UPSTREAM_DIR}/envs/webshop"
 cd "${WEBSHOP_DIR}"
 
-if [[ ! -f "data.zip" ]]; then
-    echo "==> Downloading WebShop data.zip..."
-    gdown 1G_0ccLWn5kZE5rpeyAdh_YuoNzvBUjT9
-fi
+# Use --fuzzy to handle GDrive's redirect/virus-warning interstitials.
+download_or_die() {
+    local id="$1" out="$2"
+    if [[ -f "${out}" ]]; then
+        echo "    = ${out} already present"
+        return
+    fi
+    echo "==> Downloading ${out} (gdown id=${id})"
+    if ! gdown --fuzzy "https://drive.google.com/uc?id=${id}" -O "${out}"; then
+        cat <<EOM
+ERROR: gdown failed for ${out}.
+Workaround:
+  1. On a machine with Google Drive access, download:
+       https://drive.google.com/uc?id=${id}
+  2. Upload to: ${WEBSHOP_DIR}/${out}
+     (via AutoDL's JupyterLab drag-drop, or scp from your laptop)
+  3. Re-run: bash scripts/autodl_one_shot_setup.sh
+EOM
+        exit 1
+    fi
+}
 
-if [[ ! -f "indexes.zip" ]]; then
-    echo "==> Downloading WebShop indexes.zip..."
-    gdown 11zOUDkJSgGhYin9NxQtG8PVpDsika86y
-fi
+download_or_die 1G_0ccLWn5kZE5rpeyAdh_YuoNzvBUjT9 data.zip
+download_or_die 11zOUDkJSgGhYin9NxQtG8PVpDsika86y indexes.zip
 
 if [[ ! -d "data" ]]; then
     echo "==> Extracting data.zip..."
@@ -61,12 +78,17 @@ if [[ ! -d "search_index" ]]; then
     unzip -q indexes.zip -d search_index/
 fi
 
-# 4. Expert SFT trajectories
+# 4. Expert SFT trajectories (training-only). Skip when BASELINE_ONLY=1.
 cd "${UPSTREAM_DIR}"
-if [[ ! -f "data.zip" ]]; then
+if [[ "${BASELINE_ONLY:-0}" == "1" ]]; then
+    echo "==> BASELINE_ONLY=1, skipping expert SFT trajectories"
+elif [[ ! -f "data.zip" ]]; then
     echo "==> Downloading expert SFT trajectories..."
-    gdown 1_tBMDixZcIjKuv-LExNllha-YIRxhKIq
-    unzip -q data.zip
+    gdown --fuzzy "https://drive.google.com/uc?id=1_tBMDixZcIjKuv-LExNllha-YIRxhKIq" -O data.zip || {
+        echo "WARNING: SFT trajectories download failed — needed for training, not baseline."
+        echo "         Set BASELINE_ONLY=1 to skip this step entirely."
+    }
+    [[ -f data.zip ]] && unzip -q data.zip
 fi
 
 cd "${REPO_ROOT}"

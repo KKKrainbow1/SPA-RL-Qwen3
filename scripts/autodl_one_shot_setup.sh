@@ -77,7 +77,7 @@ pip install -r requirements-baseline.txt
 # 6. WebShop env + data + spacy model.
 # -----------------------------------------------------------------------------
 step 6 "scripts/setup_data.sh (clones upstream, downloads WebShop data)"
-bash scripts/setup_data.sh
+BASELINE_ONLY=1 bash scripts/setup_data.sh
 
 # -----------------------------------------------------------------------------
 # 7. Patch upstream FastChat / PRM for Qwen3.
