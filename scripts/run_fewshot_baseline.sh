@@ -14,4 +14,10 @@ export VLLM_PORT="${VLLM_PORT:-8000}"
 export K_SHOT="${K_SHOT:-1}"
 export PYTHONPATH="${REPO_ROOT}/upstream:${REPO_ROOT}:${PYTHONPATH:-}"
 
+# pyserini's _openai.py instantiates openai.OpenAI() at module import; on
+# newer openai SDK this raises if OPENAI_API_KEY is unset, even though we
+# never use the OpenAI encoder. Provide a placeholder to bypass — our
+# vLLM client passes api_key="EMPTY" explicitly so this does not leak.
+export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-pyserini-bypass-not-used}"
+
 bash extensions/tool_call_eval/run_qwen3_fewshot.sh
