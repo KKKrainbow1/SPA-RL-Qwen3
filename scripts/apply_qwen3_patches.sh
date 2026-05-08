@@ -62,25 +62,27 @@ if [[ ! -L "${EXT_LINK}" ]]; then
     echo "    + Linked extensions -> ${EXT_LINK}"
 fi
 
-# Make optional eval_agent task imports lazy. Upstream's eval_agent/tasks/__init__.py
-# eagerly imports every task module (alfworld, sciworld, etc.); since baseline only
-# needs WebShopTask, wrap each `from .X import Y` line in try/except so a missing
-# optional env package doesn't kill the WebShopTask import.
-TASKS_INIT="${UPSTREAM}/eval_agent/tasks/__init__.py"
-if [[ -f "${TASKS_INIT}" ]] && ! grep -q "except ImportError" "${TASKS_INIT}"; then
-    python - <<PY
-import re
-p = "${TASKS_INIT}"
+# Make optional eval_agent task/env imports lazy. Upstream's __init__.py files
+# eagerly import every module (alfworld, sciworld, ...). Baseline only needs
+# WebShop, so wrap each `from .X import Y` in try/except — a missing optional
+# package or a failed sibling import won't kill the WebShop import chain.
+for INIT in "${UPSTREAM}/eval_agent/tasks/__init__.py" \
+            "${UPSTREAM}/eval_agent/envs/__init__.py"; do
+    if [[ -f "${INIT}" ]] && ! grep -q "except ImportError" "${INIT}"; then
+        python - "${INIT}" <<'PY'
+import re, sys
+p = sys.argv[1]
 with open(p) as f: c = f.read()
 c = re.sub(r'^(from \.\w+ import .+)$',
            r'try:\n    \1\nexcept ImportError:\n    pass',
            c, flags=re.MULTILINE)
 with open(p, 'w') as f: f.write(c)
 PY
-    echo "    + Wrapped optional task imports in ${TASKS_INIT}"
-else
-    echo "    = ${TASKS_INIT} already patched (or missing)"
-fi
+        echo "    + Wrapped optional imports in ${INIT}"
+    else
+        echo "    = ${INIT} already patched (or missing)"
+    fi
+done
 
 echo "==> Done. Verify:"
 echo "    cd upstream && python -c \"from fastchat.model.model_adapter import get_model_adapter; print(get_model_adapter('Qwen/Qwen3-8B'))\""
