@@ -1,0 +1,27 @@
+[
+  {
+    "instruction": "i need a long clip-in hair extension which is natural looking, and price lower than 40.00 dollars",
+    "trajectory": [
+      {
+        "observation": "WebShop [SEP] Instruction: i need a long clip-in hair extension which is natural looking, and price lower than 40.00 dollars [SEP] Search",
+        "thought": "I should search for long, natural-looking clip-in hair extensions.",
+        "tool_call": {"name": "search", "arguments": {"keyword": "long clip-in hair extension natural"}}
+      },
+      {
+        "observation": "[SEP] Page 1 (Total results: 50) [SEP] B09C337K8S [SEP] Hair Clip Extensions Long Natural Black 18 inch [SEP] $29.99 [SEP] B07XYZ1234 [SEP] Synthetic Wavy Extensions [SEP] $42.00",
+        "thought": "B09C337K8S looks like a strong match — long, natural, $29.99 (under $40).",
+        "tool_call": {"name": "click", "arguments": {"value": "B09C337K8S"}}
+      },
+      {
+        "observation": "[SEP] Hair Clip Extensions Long Natural Black 18 inch [SEP] color: black / brown / blonde [SEP] size: 14 inch / 16 inch / 18 inch / 20 inch [SEP] Description [SEP] Features [SEP] Reviews [SEP] Buy Now",
+        "thought": "I want long, so I'll select the 20 inch option.",
+        "tool_call": {"name": "click", "arguments": {"value": "20 inch"}}
+      },
+      {
+        "observation": "[SEP] selected: 20 inch [SEP] Buy Now",
+        "thought": "All set, complete the purchase.",
+        "tool_call": {"name": "click", "arguments": {"value": "Buy Now"}}
+      }
+    ]
+  }
+]
