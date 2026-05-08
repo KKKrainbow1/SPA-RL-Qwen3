@@ -1,0 +1,38 @@
+{
+  "_comment": "Step-wise PPO config for Qwen3-8B + LoRA. Tuned for offline PPO with PRM step rewards.",
+
+  "peft_kwargs": {
+    "r": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
+  },
+
+  "ppo_kwargs": {
+    "learning_rate": 1e-6,
+    "batch_size": 32,
+    "mini_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "ppo_epochs": 2,
+
+    "_kl_section": "Tighter than TRL defaults — give PRM signal more room",
+    "init_kl_coef": 0.05,
+    "adap_kl_ctrl": true,
+    "target": 8.0,
+    "horizon": 10000,
+
+    "cliprange": 0.2,
+    "cliprange_value": 0.2,
+
+    "early_stopping": true,
+    "target_kl": 0.5,
+
+    "max_grad_norm": 1.0,
+    "vf_coef": 0.1,
+
+    "log_with": "wandb",
+    "tracker_project_name": "SPA-RL-Qwen3"
+  }
+}

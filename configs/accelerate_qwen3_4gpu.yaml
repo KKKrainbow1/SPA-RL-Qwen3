@@ -1,0 +1,37 @@
+# Accelerate config for Qwen3-8B on 4×A100 80G with DeepSpeed ZeRO-2.
+# Used by `accelerate launch --config_file configs/accelerate_qwen3_4gpu.yaml ...`.
+#
+# Generated equivalent to running:
+#   accelerate config
+#   > Multi-GPU
+#   > DeepSpeed: yes
+#   > ZeRO stage: 2
+#   > offload optimizer: cpu
+#   > offload param: none
+#   > num processes: 4
+#   > mixed precision: bf16
+
+compute_environment: LOCAL_MACHINE
+debug: false
+distributed_type: DEEPSPEED
+deepspeed_config:
+  zero_stage: 2
+  offload_optimizer_device: cpu
+  offload_param_device: none
+  zero3_init_flag: false
+  zero3_save_16bit_model: false
+  gradient_accumulation_steps: 4
+  gradient_clipping: 1.0
+
+machine_rank: 0
+main_training_function: main
+mixed_precision: bf16
+num_machines: 1
+num_processes: 4
+gpu_ids: all
+
+rdzv_backend: static
+same_network: true
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
