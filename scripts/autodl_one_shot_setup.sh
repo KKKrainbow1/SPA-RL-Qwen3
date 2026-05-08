@@ -60,11 +60,12 @@ git pull --ff-only
 # -----------------------------------------------------------------------------
 # 4. Java for WebShop's pyserini index (needs JVM 11+).
 # -----------------------------------------------------------------------------
-step 4 "Install OpenJDK if missing"
-if ! command -v java >/dev/null 2>&1; then
+step 4 "Install OpenJDK (JDK, not just JRE — pyserini's jnius needs javac)"
+if ! command -v javac >/dev/null 2>&1; then
     apt-get update -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openjdk-17-jre-headless
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openjdk-17-jdk-headless
 fi
+javac -version 2>&1 | head -1
 java -version 2>&1 | head -1
 
 # -----------------------------------------------------------------------------
