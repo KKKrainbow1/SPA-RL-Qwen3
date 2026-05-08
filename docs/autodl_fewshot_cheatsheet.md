@@ -1,8 +1,21 @@
 # AutoDL Few-shot Baseline Cheat Sheet
 
 Target: Qwen3-8B on WebShop test 200, 1-shot, vLLM OpenAI server.
-Hardware: 1×A100 40G. Budget: ~¥5. Wall-clock: ~20–25 min (incl. setup).
+Hardware: 1×A100 40G **or** 1×RTX 5090 32G. Budget: ~¥5. Wall-clock: ~20–25 min (incl. setup).
 Output: `results/qwen3_8b_fewshot/summary.json` (avg_reward, success_rate).
+
+## TL;DR — one-shot setup
+
+After SSH-ing in and `cd ~/autodl-tmp/SPA-RL-Qwen3`:
+
+```bash
+bash scripts/autodl_one_shot_setup.sh
+MODEL_PATH=/root/autodl-tmp/models/Qwen3-8B bash scripts/run_fewshot_baseline.sh
+```
+
+Done. The setup script is idempotent — safe to re-run if a step crashed.
+
+The rest of this doc walks through what each step does, in case you need to debug.
 
 ---
 

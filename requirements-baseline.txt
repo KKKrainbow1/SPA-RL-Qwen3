@@ -40,3 +40,4 @@ aiohttp
 tqdm
 numpy
 pandas
+gdown
