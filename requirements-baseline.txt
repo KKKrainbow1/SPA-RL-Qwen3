@@ -1,0 +1,42 @@
+# Baseline-only dependencies — vLLM inference on WebShop test split.
+# Use this instead of requirements.txt when only running few-shot eval
+# (no SFT/PRM/PPO training).
+#
+# Why a separate file:
+#   - requirements.txt pins `vllm>=0.6` (Llama-3 era) which on a torch>=2.6
+#     image will try to downgrade torch and frequently exhausts AutoDL's
+#     ~30 GB system disk mid-install.
+#   - flash-attn / deepspeed / bitsandbytes / wandb are training-only and
+#     add 15+ minutes of build time (flash-attn) for no inference benefit.
+#
+# Install:
+#   pip install --no-cache-dir -r requirements-baseline.txt
+#
+# Pre-reqs the script needs but pip can't install:
+#   - Java (for WebShop's pyserini index) — bash scripts/setup_data.sh
+#   - WebShop env editable install — bash scripts/setup_data.sh
+#   - en_core_web_lg spacy model — bash scripts/setup_data.sh
+
+# Inference / serving — no upper pin so it picks a wheel matching the
+# image's installed torch version (e.g. torch 2.8 ⇒ vllm 0.10+).
+vllm
+openai>=1.30
+
+# Tokenizer + chat template
+transformers>=4.45
+
+# Model download from ModelScope (faster than HF in CN regions)
+modelscope
+
+# WebShop env runtime
+beautifulsoup4
+flask
+gym>=0.21
+spacy
+pyserini
+
+# Utilities
+aiohttp
+tqdm
+numpy
+pandas

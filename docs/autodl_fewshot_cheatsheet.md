@@ -19,14 +19,40 @@ git clone https://github.com/<your-user>/SPA-RL-Qwen3.git
 cd SPA-RL-Qwen3
 ```
 
-## 2. One-shot install (≈5–7 min)
+## 2. Move pip / HF caches to data disk (do this FIRST)
+
+AutoDL's system disk is small (~30 GB). vLLM + torch + transformers easily exhaust it. Persist cache redirection to `~/.bashrc` so it survives reboots:
 
 ```bash
-# Python deps
-pip install -r requirements.txt
-pip install vllm openai gdown spacy
+grep -q "PIP_CACHE_DIR" ~/.bashrc || cat >> ~/.bashrc << 'EOF'
+export PIP_CACHE_DIR=/root/autodl-tmp/.pip-cache
+export HF_HOME=/root/autodl-tmp/.hf
+export MODELSCOPE_CACHE=/root/autodl-tmp/.modelscope
+export TMPDIR=/root/autodl-tmp/.tmp
+EOF
+mkdir -p /root/autodl-tmp/{.pip-cache,.hf,.modelscope,.tmp}
+source ~/.bashrc
+```
 
-# Upstream + WebShop sim + data + Java + spacy model
+## 3. Install Python deps (≈5–7 min)
+
+For **baseline-only** (recommended — skips flash-attn build, ~15 min savings):
+
+```bash
+pip install --no-cache-dir -r requirements-baseline.txt
+```
+
+For the **full training pipeline** later:
+
+```bash
+pip install --no-cache-dir -r requirements.txt
+```
+
+⚠ `requirements.txt` pins `vllm>=0.6` which can fight a modern torch image (≥2.6) and try to downgrade torch — if the system disk is tight that's how you end up with a half-uninstalled torch. Use `requirements-baseline.txt` for inference-only runs.
+
+## 4. WebShop env + data + Java + spacy model
+
+```bash
 bash scripts/setup_data.sh
 ```
 
@@ -36,7 +62,7 @@ bash scripts/setup_data.sh
 
 Sanity check: `ls upstream/envs/webshop/data/items_shuffle.json` should exist.
 
-## 3. Apply Qwen3 patches
+## 5. Apply Qwen3 patches
 
 ```bash
 bash scripts/apply_qwen3_patches.sh
@@ -48,20 +74,26 @@ cd upstream && python -c "from fastchat.model.model_adapter import get_model_ada
 cd ..
 ```
 
-## 4. Pre-download Qwen3-8B (≈3–5 min, ~17 GB)
+## 6. Pre-download Qwen3-8B (≈3–5 min, ~17 GB)
 
 Done once, cached. Saves an awkward 5-min silence inside the eval run.
 
+**Prefer ModelScope on AutoDL (CN region) — it's much faster than HuggingFace:**
+
 ```bash
+modelscope download --model Qwen/Qwen3-8B --local_dir /root/autodl-tmp/models/Qwen3-8B
+export MODEL_PATH=/root/autodl-tmp/models/Qwen3-8B
+```
+
+(Or via Python if the CLI is unavailable: `python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwen3-8B', cache_dir='/root/autodl-tmp/models')"`.)
+
+HuggingFace fallback (set the mirror first if slow):
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
 python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen3-8B')"
 ```
 
-If your AutoDL region is slow on HF, set the mirror:
-```bash
-export HF_ENDPOINT=https://hf-mirror.com
-```
-
-## 5. Run the baseline
+## 7. Run the baseline
 
 ```bash
 bash scripts/run_fewshot_baseline.sh
@@ -81,7 +113,7 @@ tail -f results/qwen3_8b_fewshot/logs/vllm.log
 nvidia-smi -l 5
 ```
 
-## 6. Read the result
+## 8. Read the result
 
 ```bash
 python -m json.tool results/qwen3_8b_fewshot/summary.json | head -20
@@ -89,7 +121,7 @@ python -m json.tool results/qwen3_8b_fewshot/summary.json | head -20
 
 Expected keys: `model`, `n_tasks` (=200), `avg_reward`, `success_rate`.
 
-## 7. Commit and shut down
+## 9. Commit and shut down
 
 ```bash
 git add results/qwen3_8b_fewshot/summary.json
