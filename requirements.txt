@@ -11,7 +11,6 @@ vllm>=0.6.0            # required for AsyncLLMEngine + tool_call_parser
 openai>=1.30           # OpenAI-compatible client for vLLM API server
 
 # Models
-torch>=2.1
 einops
 flash-attn>=2.5; platform_system != "Darwin"
 bitsandbytes; platform_system != "Darwin"
