@@ -58,6 +58,11 @@ nohup.out
 eval_outputs/
 eval/*/
 
+# Per-experiment eval output dirs (per-task JSONs + vllm logs are too large
+# and ephemeral). Curate the headline numbers into results/<setup>_summary.json
+# at the root and commit those instead.
+results/qwen3_8b_*/
+
 # OS
 .DS_Store
 Thumbs.db

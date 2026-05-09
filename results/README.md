@@ -2,6 +2,16 @@
 
 This directory holds reproducible experiment outputs — JSON summaries, training curves, ablation tables. **All numbers cited in the top-level README are reproducible from these files.**
 
+## Headline (measured 2026-05-08)
+
+> **Qwen3-8B with 1-shot native tool-calling achieves `avg_reward = 0.644` on WebShop test 200, with zero tool-call errors over 200 tasks.**
+
+This is **1.1 pp** below the SPA paper's reported Llama-3-8B + SPA training number (~65.5%) — meaning a modern instruction-tuned 8B model matches a 2024-era SPA-trained baseline without any RL fine-tuning. See `qwen3_8b_fewshot_summary.json`.
+
+The "success rate" of 97.5% in the summary is **misleading** — WebShop sets `success=True` whenever the agent clicks Buy Now, regardless of correctness. The trustworthy metric is `avg_reward`. Distribution: 29% perfect (reward = 1.0), 32.5% near-perfect (≥ 0.8), 4% complete failure (= 0.0).
+
+
+
 ## Layout
 
 ```
